@@ -7,6 +7,5 @@ def main():
     boostedManager = boosted.Boosted()
 
 
-
 if __name__ == '__main__':
     main()
