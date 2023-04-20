@@ -1,6 +1,6 @@
 import files
 import csv
-import datetime
+from  datetime import datetime
 
 class DataReader():
     #FIELDS
@@ -29,7 +29,16 @@ class DataReader():
                 for i in range(0, len(head)):
                     entry[head[i]] = line[i]
                 
-                #get unix start
-                start = datetime.datetime(entry["date"])
+                # Combine the date and time fields into a single string
+                start_time_str = entry['Date'] + ' ' + entry['Start time']
+                end_time_str = entry['Date'] + ' ' + entry['End time']
+
+                # Create datetime objects in the specified timezone
+                start_time = datetime.strptime(start_time_str, '%Y-%m-%d %I:%M:%S %p')
+                end_time = datetime.strptime(end_time_str, '%Y-%m-%d %I:%M:%S %p')
+
+                # Print the resulting datetime objects
+                print(start_time)
+                print(end_time)
 
             return data
