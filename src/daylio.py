@@ -10,6 +10,7 @@ class Daylio(datareader.DataReader):
         data = []
         moods = {}
 
+        print("\nWe need to collect the numerical values for what certain emotions mean please try to enter them below:")
         for entry in self._raw:
             updated = {}
 
@@ -34,6 +35,7 @@ class Daylio(datareader.DataReader):
             updated["date"] = full_datetime
             
             data.append(updated)
+        print("")
 
         sorted(data, key=lambda entry: entry["date"])
         self._data = data

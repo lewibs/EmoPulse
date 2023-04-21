@@ -10,8 +10,8 @@ class DataManager():
         boostedManager = boosted.Boosted()
         daylioManager = daylio.Daylio()
 
+        #combine data
         self._data = {}
-
         for entry in boostedManager._data:
             entry["emotions"] = []
 
@@ -50,9 +50,9 @@ class DataManager():
                 except:
                     lostDates += 1
             
-            print("I may have had some issues converting data")
+            print("\nI may have had some issues converting data")
             print(f"dates lost: {lostDates}")
             print(f"entries lost: {lostEntries}")
-            print(f"emotions lost: {lostEmotions}")
+            print(f"emotions lost: {lostEmotions}\n")
 
             json.dump(printable, f, indent=4)
