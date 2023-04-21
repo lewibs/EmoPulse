@@ -31,3 +31,6 @@ class Boosted(datareader.DataReader):
             sorted(data, key=lambda entry: entry["start"])
             self._data = data
             return self._data
+    
+    def getEntryAt(self, time):
+        print("test")

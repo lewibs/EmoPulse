@@ -42,3 +42,6 @@ class DataReader():
     #responsible for assigning a sorted array of data
     def formatRaw(self):
         pass
+
+    def getEntryAt(self, time):
+        pass
