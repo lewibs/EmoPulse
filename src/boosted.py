@@ -23,7 +23,7 @@ class Boosted(datareader.DataReader):
                 updated = {}
                 updated["start"] = start_time
                 updated["end"] = end_time
-                updated["activity"] = entry["Project name"]
+                updated["activity"] = entry["Project name"].strip()
                 updated["duration"] = entry["Duration"]
 
                 data.append(updated)
