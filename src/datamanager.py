@@ -2,7 +2,7 @@ import json
 import boosted
 import daylio
 import copy
-import array
+import datetime
 
 INDENT = 4
 
@@ -16,6 +16,15 @@ class DataManager():
 
     def __init__(self):
         self.save()
+
+        for activity in self.getActivityTypes():
+            self.generateReportForActivity(activity)
+
+    def generateReportForActivity(self, activity):
+        print(f"\n{activity}:")
+        print(f"Average duration: {self.calculateAverageActivityDuration(activity)}")
+        print(f"Average time per day: {self.calculateAverageActivityDuration(activity)}")
+        print("")
 
     def getMeta(self):
         if len(self._meta):
@@ -77,6 +86,9 @@ class DataManager():
 
             return self._dates
 
+    def getActivityTypes(self):
+        return self.getMeta()["activities"]
+
     def getActivities(self):
         if len(self._activities):
             return self._activities
@@ -84,9 +96,24 @@ class DataManager():
             for date in self.getDates():
                 for activity in self.getDates()[date]:
                     self._activities.append(activity)
-            return self._activities
-            
 
+            sorted(self._activities, key=lambda entry: entry["start"])
+
+            # now we want to clean up the data when it rolls over
+            # midnight and make those one activity
+            activities = []
+            last = self._activities[0]
+            for activity in self._activities[1:]:
+                if last["activity"] == activity["activity"]: 
+                    last["end"] = activity["end"]
+                    last["duration"] += activity["duration"]
+                else:
+                    last = activity
+                    activities.append(last)
+            
+            self._activities = activities
+            return self._activities
+    
     def getEmotions(self):
         if len(self._emotions):
             return self._emotions
@@ -95,24 +122,38 @@ class DataManager():
                 self._emotions.extend(activity["emotions"])
             return self._emotions
 
-    
+    def getDateCounts(self):
+        return self.getMeta()["date_entries"]
 
-    def calculateHabitStability(self, habit):
-        print(f"\n{habit} stability:")
-        missed = 0
-        for date in self.getDates():
-            logged = False
-            for log in self.getDates()[date]:
-                if log["activity"] == habit:
-                    logged = True
-                    #calculate stability here?
-            
-            if not logged:
-                missed += 1
+    def countActivities(self, search, minDuration=datetime.timedelta(0)):
+        total = 0
+        for activity in self.getActivities():
+            if activity["activity"] == search:
+                d = activity["duration"]
+                if d > minDuration:
+                    total += 1
 
-        print(f"you missed {missed} days\n")
+        return total
 
-        
+    def calculateTotalActivityDuration(self, search, minDuration=datetime.timedelta(0)):
+        duration = datetime.timedelta(0,0,0)
+
+        for activity in self.getActivities():
+            if activity["activity"] == search:
+                d = activity["duration"]
+                
+                if d > minDuration:
+                    duration += d
+
+
+        return duration
+
+    def calculateAverageActivityDuration(self, search, minDuration=datetime.timedelta(0)): 
+        #2O(n) but whatever the code is more readable and less repeated
+        return self.calculateTotalActivityDuration(search, minDuration)/self.countActivities(search, minDuration)
+
+    def calculateAverageActivityTimePerDay(self, search, minDuration=datetime.timedelta(0)):
+        return self.calculateTotalActivityDuration(search, minDuration) / self.getDateCounts()
 
     def save(self):
         with open('data.json', "w") as f:
@@ -127,6 +168,7 @@ class DataManager():
                         try:
                             entry["start"] = entry["start"].strftime("%Y-%m-%d %H:%M:%S")
                             entry["end"] = entry["end"].strftime("%Y-%m-%d %H:%M:%S")
+                            entry["duration"] = str(entry["duration"])
 
                             for emotion in entry["emotions"]:
                                 try:
