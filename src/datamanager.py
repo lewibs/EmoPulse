@@ -23,7 +23,7 @@ class DataManager():
     def generateReportForActivity(self, activity):
         print(f"\n{activity}:")
         print(f"Average duration: {self.calculateAverageActivityDuration(activity)}")
-        print(f"Average time per day: {self.calculateAverageActivityDuration(activity)}")
+        print(f"Average time per day: {self.calculateAverageActivityTimePerDay(activity)}")
         print("")
 
     def getMeta(self):
