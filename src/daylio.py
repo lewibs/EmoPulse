@@ -1,5 +1,6 @@
 import datareader
 import datetime
+import unixFrom
 
 class Daylio(datareader.DataReader):    
     #CONSTRUCTOR
@@ -26,6 +27,7 @@ class Daylio(datareader.DataReader):
 
             # Convert the combined string into a datetime object
             full_datetime = datetime.datetime.strptime(datetime_str, '%Y-%m-%d %I:%M %p')
+            full_datetime = unixFrom.datetime(full_datetime)
             
             updated["mood"] = entry["mood"]
             updated["mood_value"] = moods[entry["mood"]]

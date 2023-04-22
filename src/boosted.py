@@ -1,6 +1,7 @@
 import datareader
 import csv
 import datetime
+import unixFrom
 
 class Boosted(datareader.DataReader):    
     #CONSTRUCTOR
@@ -18,8 +19,13 @@ class Boosted(datareader.DataReader):
 
                 # Create datetime objects in the specified timezone
                 start_time = datetime.datetime.strptime(start_time_str, '%Y-%m-%d %I:%M:%S %p')
+                start_time = unixFrom.datetime(start_time)
+
                 end_time = datetime.datetime.strptime(end_time_str, '%Y-%m-%d %I:%M:%S %p')
+                end_time = unixFrom.datetime(end_time)
+
                 duration  = datetime.timedelta(hours=int(entry["Duration"].split(":")[0]), minutes=int(entry["Duration"].split(":")[1]), seconds=int(entry["Duration"].split(":")[2]))
+                duration = unixFrom.timedelta(duration)
 
                 updated = {}
                 updated["start"] = start_time

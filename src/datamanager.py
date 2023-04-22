@@ -2,7 +2,8 @@ import json
 import boosted
 import daylio
 import copy
-import datetime
+import numpy
+import unixFrom
 
 INDENT = 4
 
@@ -24,6 +25,7 @@ class DataManager():
         print(f"\n{activity}:")
         print(f"Average duration: {self.calculateAverageActivityDuration(activity)}")
         print(f"Average time per day: {self.calculateAverageActivityTimePerDay(activity)}")
+        print(self.calculateAverageEdgeTimes(activity))
         print("")
 
     def getMeta(self):
@@ -77,7 +79,7 @@ class DataManager():
                     if entry["start"] <= emotion["date"] and entry["end"] >= emotion["date"]:
                         entry["emotions"].append(emotion)
                 
-                date = entry["start"].strftime("%Y-%m-%d")
+                date = unixFrom.roundToDay(entry["start"])
                 
                 if date in self._dates:
                     self._dates[date].append(entry)
@@ -125,7 +127,7 @@ class DataManager():
     def getDateCounts(self):
         return self.getMeta()["date_entries"]
 
-    def countActivities(self, search, minDuration=datetime.timedelta(0)):
+    def countActivities(self, search, minDuration=0):
         total = 0
         for activity in self.getActivities():
             if activity["activity"] == search:
@@ -135,8 +137,8 @@ class DataManager():
 
         return total
 
-    def calculateTotalActivityDuration(self, search, minDuration=datetime.timedelta(0)):
-        duration = datetime.timedelta(0,0,0)
+    def calculateTotalActivityDuration(self, search, minDuration=0):
+        duration = 0
 
         for activity in self.getActivities():
             if activity["activity"] == search:
@@ -148,12 +150,52 @@ class DataManager():
 
         return duration
 
-    def calculateAverageActivityDuration(self, search, minDuration=datetime.timedelta(0)): 
+    def calculateAverageActivityDuration(self, search, minDuration=0): 
         #2O(n) but whatever the code is more readable and less repeated
         return self.calculateTotalActivityDuration(search, minDuration)/self.countActivities(search, minDuration)
 
-    def calculateAverageActivityTimePerDay(self, search, minDuration=datetime.timedelta(0)):
+    def calculateAverageActivityTimePerDay(self, search, minDuration=0):
         return self.calculateTotalActivityDuration(search, minDuration) / self.getDateCounts()
+
+    def getEdgeTimes(self, search, minDuration=0):
+        edges = []
+        for activity in self.getActivities():
+            if activity["activity"] == search:
+                d = activity["duration"]
+                if d > minDuration:
+                    edges.append({
+                        "start": activity["start"],
+                        "end": activity["end"],
+                        "mid": (activity["end"] - activity["start"])
+
+                    })
+
+        return edges
+    
+
+    def calculateAverageEdgeTimes(self, search, minDuration=0):
+        edges = self.getEdgeTimes(search, minDuration)
+        start = [edge["start"] for edge in edges]
+        mid = [edge["mid"] for edge in edges]
+        end = [edge["end"] for edge in edges]
+
+
+        edges = {
+            "start": {
+                "average": numpy.mean(start),
+                "std": numpy.std(start)
+            },
+            "end": {
+                "average": numpy.mean(end),
+                "std": numpy.std(end)
+            },
+            "mid": {
+                "average": numpy.mean(mid),
+                "std": numpy.std(mid)
+            }
+        }
+
+        return edges
 
     def save(self):
         with open('data.json', "w") as f:
