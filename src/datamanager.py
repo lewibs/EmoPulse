@@ -4,11 +4,10 @@ import daylio
 import copy
 import numpy
 import unixFrom
+import dateStringFrom
 
 INDENT = 4
 
-#i dont feel great about this
-#for one why am i using a class to do this when it would do better in fp
 class DataManager():
     _meta = {}
     _dates = {}
@@ -23,9 +22,20 @@ class DataManager():
 
     def generateReportForActivity(self, activity):
         print(f"\n{activity}:")
-        print(f"Average duration: {self.calculateAverageActivityDuration(activity)}")
-        print(f"Average time per day: {self.calculateAverageActivityTimePerDay(activity)}")
-        print(self.calculateAverageEdgeTimes(activity))
+
+        print(f"Average duration: {dateStringFrom.unixDelta(self.calculateAverageActivityDuration(activity))}")
+        print(f"Average time per day: {dateStringFrom.unixDelta(self.calculateAverageActivityTimePerDay(activity))}\n")
+
+        edges = self.calculateAverageEdgeTimes(activity)
+        def standardXtime(type):
+            time = dateStringFrom.unixDelta(edges[type]["average"])
+            std = dateStringFrom.unixDelta(edges[type]["std"])
+            print(f"Standard activity {type} time: {time} ± {std}")
+        standardXtime("start")
+        standardXtime("mid")
+        standardXtime("end")
+        print("")
+
         print("")
 
     def getMeta(self):
@@ -175,10 +185,9 @@ class DataManager():
 
     def calculateAverageEdgeTimes(self, search, minDuration=0):
         edges = self.getEdgeTimes(search, minDuration)
-        start = [edge["start"] for edge in edges]
-        mid = [edge["mid"] for edge in edges]
-        end = [edge["end"] for edge in edges]
-
+        start = [unixFrom.stampInDay(edge["start"]) for edge in edges]
+        mid = [unixFrom.stampInDay(edge["mid"]) for edge in edges]
+        end = [unixFrom.stampInDay(edge["end"]) for edge in edges]
 
         edges = {
             "start": {
@@ -208,13 +217,13 @@ class DataManager():
                 try:
                     for entry in printable[date]:
                         try:
-                            entry["start"] = entry["start"].strftime("%Y-%m-%d %H:%M:%S")
-                            entry["end"] = entry["end"].strftime("%Y-%m-%d %H:%M:%S")
-                            entry["duration"] = str(entry["duration"])
+                            entry["start"] = dateStringFrom.unix(entry["start"])
+                            entry["end"] = dateStringFrom.unix(entry["end"])
+                            entry["duration"] = dateStringFrom.unixDelta(entry["duration"])
 
                             for emotion in entry["emotions"]:
                                 try:
-                                    emotion["date"] = emotion["date"].strftime("%Y-%m-%d %H:%M:%S")
+                                    emotion["date"] = dateStringFrom.unix(emotion["date"])
                                 except:
                                     lostEmotions += 1
                         except:
@@ -230,4 +239,7 @@ class DataManager():
             json.dump(printable, f, indent=INDENT)
         
         with open("meta.json", "w") as f:
-            json.dump(self.getMeta(), f, indent=INDENT)
+            printable = copy.deepcopy(self.getMeta())
+            printable["dates"] = [dateStringFrom.unixDay(date) for date in printable["dates"]]
+
+            json.dump(printable, f, indent=INDENT)
