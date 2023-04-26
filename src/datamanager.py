@@ -20,6 +20,20 @@ class DataManager():
         for activity in self.getActivityTypes():
             self.generateReportForActivity(activity)
 
+        for emotionType in self.getEmotionTypes():
+            self.generateReportForEmotion(emotionType)
+
+
+
+    def generateReportForEmotion(self, emotion):
+        emotions = self.getEmotions()
+        currentEmotions = self.filterForEmotion(emotion)
+        emotionValue = currentEmotions[0]["mood_value"]
+        print(f"\n{emotionValue}: {emotion}")
+        print(f"entries: {len(currentEmotions)}")
+        print(f"frequency: {len(currentEmotions) / len(emotions)}")
+        print("")
+
     def generateReportForActivity(self, activity):
         print(f"\n{activity}:")
 
@@ -31,6 +45,7 @@ class DataManager():
             time = dateStringFrom.unixDelta(edges[type]["average"])
             std = dateStringFrom.unixDelta(edges[type]["std"])
             print(f"Standard activity {type} time: {time} ± {std}")
+
         standardXtime("start")
         standardXtime("mid")
         standardXtime("end")
@@ -133,6 +148,16 @@ class DataManager():
             for activity in self.getActivities():
                 self._emotions.extend(activity["emotions"])
             return self._emotions
+    
+    def getEmotionTypes(self):
+        return self.getMeta()["emotion_moods"]
+    
+    def filterForEmotion(self, search):
+        emotions = []
+        for emotion in self.getEmotions():
+            if emotion["mood"] == search:
+                emotions.append(emotion)
+        return emotions
 
     def getDateCounts(self):
         return self.getMeta()["date_entries"]
@@ -182,7 +207,7 @@ class DataManager():
 
         return edges
     
-
+    # this needs to be reworked the std is really funky because of the rollover issue at midnight
     def calculateAverageEdgeTimes(self, search, minDuration=0):
         edges = self.getEdgeTimes(search, minDuration)
         start = [unixFrom.stampInDay(edge["start"]) for edge in edges]
@@ -205,6 +230,7 @@ class DataManager():
         }
 
         return edges
+
 
     def save(self):
         with open('data.json', "w") as f:
