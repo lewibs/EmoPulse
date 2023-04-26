@@ -7,6 +7,7 @@ import unixFrom
 import dateStringFrom
 
 INDENT = 4
+NOTKNOWN = "unknown"
 
 class DataManager():
     _meta = {}
@@ -23,16 +24,99 @@ class DataManager():
         for emotionType in self.getEmotionTypes():
             self.generateReportForEmotion(emotionType)
 
-
-
     def generateReportForEmotion(self, emotion):
         emotions = self.getEmotions()
         currentEmotions = self.filterForEmotion(emotion)
         emotionValue = currentEmotions[0]["mood_value"]
+
         print(f"\n{emotionValue}: {emotion}")
         print(f"entries: {len(currentEmotions)}")
-        print(f"frequency: {len(currentEmotions) / len(emotions)}")
+        print(f"frequency: {((len(currentEmotions) / len(emotions)) * 100):.4}%")
+
+        print("\nThe top environment items for this emotion are:")
+        triggers = self.getEnvsForEmotion(emotion)
+        for trigger in triggers[:5]:
+            print(f"{trigger[0]} occurs {trigger[1]:.4}% of the time")
         print("")
+
+        print("\nThe top trigger items for this emotion are:")
+        triggers = self.getEnvsForEmotion(emotion)
+        for trigger in triggers[:5]:
+            print(f"{trigger[0]} occurs {trigger[1]:.4}% of the time")
+        print("")
+
+    def getEntryTriggersForEmotion(self, search):
+        def sortByDate(entry): 
+            return entry["date"]
+        
+        emotions = self.getEmotions()
+        sorted(emotions, key=sortByDate)
+
+        data = {}
+        last = None
+        for emotion in emotions:
+            if last is not None:
+                if emotion["mood"] == search and last["mood"] != search:
+                    for trigger in emotion["env"]:
+                        if trigger == '':
+                            trigger = NOTKNOWN
+                        
+                        if trigger in data:
+                            data[trigger] += 1
+                        else:
+                            data[trigger] = 1
+
+            last = emotion
+
+        sum = 0
+        for key in data:
+            sum += data[key]
+
+        for key in data:
+            data[key] = (data[key] / sum) * 100
+
+        res = []
+        for key in data:
+            res.append([key, data[key]])
+
+        def sort(val):
+            return val[1]
+        sorted(res, key=sort)
+        return res
+
+    # def getExitTriggersForEmotion(self, search):
+
+    def getEnvsForEmotion(self, search):
+        data = {}
+        emotions = self.filterForEmotion(search)
+    
+        for emotion in emotions:
+            for trigger in emotion["env"]:
+                if trigger == '':
+                    trigger = NOTKNOWN
+
+                if trigger in data:
+                    data[trigger] += 1 
+                else:
+                    data[trigger] = 1
+
+        sum = 0
+        for key in data:
+            sum += data[key]
+
+        for key in data:
+            data[key] = (data[key] / sum) * 100
+        
+        res = []
+        for key in data:
+            res.append([key, data[key]])
+
+        def secondInArr(x):
+            return x[1]
+        
+        sorted(res, key=secondInArr)
+        return res
+
 
     def generateReportForActivity(self, activity):
         print(f"\n{activity}:")
